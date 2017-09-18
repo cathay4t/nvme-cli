@@ -4,9 +4,13 @@ a.out
 *.o
 *~
 *.swp
+*.so*
 NVME-VERSION-FILE
 
 /debian/files
 /debian/nvme-cli.debhelper.log
 /debian/nvme-cli.substvars
 /debian/nvme-cli
+
+libnvme/test/nvme_ctrls_test
+libnvme/test/ptr_array_test

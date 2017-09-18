@@ -1,5 +1,5 @@
 CFLAGS ?= -O2 -g -Wall -Werror
-CFLAGS += -std=gnu99
+CFLAGS += -std=gnu99 -I./libnvme
 CPPFLAGS += -D_GNU_SOURCE -D__CHECK_ENDIAN__
 LIBUUID = $(shell $(LD) -o /dev/null -luuid >/dev/null 2>&1; echo $$?)
 NVME = nvme
@@ -9,12 +9,15 @@ PREFIX ?= /usr/local
 SYSCONFDIR = /etc
 SBINDIR = $(PREFIX)/sbin
 LIB_DEPENDS =
+LDFLAGS += -L./libnvme -lnvme
 
 ifeq ($(LIBUUID),0)
 	override LDFLAGS += -luuid
 	override CFLAGS += -DLIBUUID
 	override LIB_DEPENDS += uuid
 endif
+
+
 
 RPMBUILD = rpmbuild
 TAR = tar
@@ -35,7 +38,7 @@ OBJS := argconfig.o suffix.o parser.o nvme-print.o nvme-ioctl.o \
 	nvme-lightnvm.o fabrics.o json.o plugin.o intel-nvme.o \
 	lnvm-nvme.o memblaze-nvme.o wdc-nvme.o nvme-models.o huawei-nvme.o
 
-nvme: nvme.c nvme.h $(OBJS) NVME-VERSION-FILE
+nvme: nvme.c nvme.h $(OBJS) NVME-VERSION-FILE libnvme.so
 	$(CC) $(CPPFLAGS) $(CFLAGS) nvme.c -o $(NVME) $(OBJS) $(LDFLAGS)
 
 nvme.o: nvme.c nvme.h nvme-print.h nvme-ioctl.h argconfig.h suffix.h nvme-lightnvm.h fabrics.h
@@ -55,6 +58,7 @@ all: doc
 clean:
 	$(RM) $(NVME) *.o *~ a.out NVME-VERSION-FILE *.tar* nvme.spec version control nvme-*.deb
 	$(MAKE) -C Documentation clean
+	$(MAKE) -C libnvme clean
 	$(RM) tests/*.pyc
 
 clobber: clean
@@ -142,3 +146,6 @@ rpm: dist
 
 .PHONY: default doc all clean clobber install-man install-bin install
 .PHONY: dist pkg dist-orig deb deb-light rpm FORCE test
+
+libnvme.so:
+	$(MAKE) -C libnvme

@@ -45,6 +45,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 
+#include <libnvme/libnvme.h>
+
 #include "nvme-print.h"
 #include "nvme-ioctl.h"
 #include "nvme-lightnvm.h"
@@ -658,7 +660,7 @@ static int nvme_attach_ns(int argc, char **argv, int attach, const char *desc, s
 	for (i = 0; i < num; i++)
 		ctrlist[i] = (uint16_t)list[i];
 
-	if (attach)	
+	if (attach)
 		err = nvme_ns_attach_ctrls(fd, cfg.namespace_id, num, ctrlist);
 	else
 		err = nvme_ns_detach_ctrls(fd, cfg.namespace_id, num, ctrlist);
@@ -960,7 +962,9 @@ int __id_ctrl(int argc, char **argv, struct command *cmd, struct plugin *plugin,
 	const char *human_readable = "show infos in readable format";
 	int err, fmt, fd;
 	unsigned int flags = 0;
-	struct nvme_id_ctrl ctrl;
+	struct nvme_ctrl *ctrl = NULL;
+	const char *err_msg = NULL;
+	struct nvme_id_ctrl *id_ctrl = NULL;
 
 	struct config {
 		int vendor_specific;
@@ -998,22 +1002,24 @@ int __id_ctrl(int argc, char **argv, struct command *cmd, struct plugin *plugin,
 	if (cfg.human_readable)
 		flags |= HUMAN;
 
-	err = nvme_identify_ctrl(fd, &ctrl);
-	if (!err) {
+	err = nvme_ctrl_get_by_fd(fd, &ctrl, &err_msg);
+	if (err == NVME_OK) {
 		if (fmt == BINARY)
-			d_raw((unsigned char *)&ctrl, sizeof(ctrl));
+			d_raw((unsigned char *) nvme_ctrl_raw_id_data_get(ctrl),
+			      NVME_CTRL_RAW_IDENTIFY_DATA_LEN);
 		else if (fmt == JSON)
-			json_nvme_id_ctrl(&ctrl, flags, vs);
+			json_nvme_id_ctrl(ctrl, flags, vs);
 		else {
 			printf("NVME Identify Controller:\n");
-			__show_nvme_id_ctrl(&ctrl, flags, vs);
+			id_ctrl = (struct nvme_id_ctrl *)
+				nvme_ctrl_raw_id_data_get(ctrl);
+			__show_nvme_id_ctrl(id_ctrl, flags, vs);
 		}
+	} else {
+		fprintf(stderr, "Error %d: %s\n", err, nvme_strerror(err));
 	}
-	else if (err > 0)
-		fprintf(stderr, "NVMe Status:%s(%x)\n",
-				nvme_status_to_string(err), err);
-	else
-		perror("identify controller");
+
+	nvme_ctrl_free(ctrl);
 
 	return err;
 }
@@ -1244,7 +1250,7 @@ static int get_feature(int argc, char **argv, struct command *cmd, struct plugin
 		fprintf(stderr, "feature-id required param\n");
 		return EINVAL;
 	}
-	
+
 	switch (cfg.feature_id) {
 	case NVME_FEAT_LBA_RANGE:
 		cfg.data_len = 4096;
@@ -1265,7 +1271,7 @@ static int get_feature(int argc, char **argv, struct command *cmd, struct plugin
 
 	if (cfg.sel == 3)
 		cfg.data_len = 0;
-	
+
 	if (cfg.data_len) {
 		if (posix_memalign(&buf, getpagesize(), cfg.data_len)) {
 			fprintf(stderr, "can not allocate feature payload\n");
