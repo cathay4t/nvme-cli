@@ -87,6 +87,14 @@
 		return le32toh(*((uint32_t *) &s->raw_data.prop_name)); \
 	}
 
+#define _getter_func_gen_uint64_t(struct_name, prop_name) \
+	uint64_t struct_name ##_## prop_name ##_get(struct struct_name *s) \
+	{ \
+		assert(s != NULL); \
+		errno = 0; \
+		return le64toh(*((uint64_t *) &s->raw_data.prop_name)); \
+	}
+
 #define _bit_field_extract(i, end_include, start_include) \
 	(i >> start_include) & ((1 << (end_include - start_include + 1)) - 1)
 
@@ -113,10 +121,39 @@
 				  rc, goto_out); \
 	} while(0)
 
+#define _hex_str_prop_init(struct_name, struct_ptr, prop_name, err_msg, \
+			   rc, goto_out) \
+	do { \
+		(struct_ptr)->strs.prop_name =  _u8_data_to_hex_str( \
+			(struct_ptr)->raw_data.prop_name, \
+			sizeof((struct_ptr)->raw_data.prop_name)/ \
+			sizeof(uint8_t)); \
+		_alloc_null_check(err_msg, (struct_ptr)->strs.prop_name, \
+				  rc, goto_out); \
+	} while(0)
+
 /*
  * Returned string should be freed by free().
  */
 const char *_u8_data_to_ascii(uint8_t *data, size_t size);
 
+/*
+ * Returned string should be freed by free().
+ */
+const char *_u8_data_to_hex_str(uint8_t *data, size_t size);
+
+/*
+ * Return NVME_OK if it's a valid NVMe controller device path or NVMe namespace
+ * device path, otherwise return NVME_ERR_INVALID_ARGUMENT.
+ */
+int _validate_nvme_dev_path(const char *dev_path, char *err_msg);
+
+/*
+ * Given "/dev/nvme0n1" or "/dev/nvme0", got "/dev/nvme0".
+ * The 'nvme_ctrl_dev_path' should be char[PATH_MAX].
+ * You should use _validate_nvme_dev_path() first.
+ */
+int _extract_ctrl_dev_path(const char *dev_path, char *nvme_ctrl_dev_path,
+			   char *err_msg);
 
 #endif	/* End of _NVME_UTILS_H_ */

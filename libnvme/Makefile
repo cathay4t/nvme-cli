@@ -17,14 +17,14 @@ LIBS_MAJOR = $(DEVLIB).$(LIBNVME_VERSION_MAJOR)
 HEADERS = libnvme.h
 TESTS = test/ptr_array_test test/nvme_ctrls_test
 
-OBJS = libnvme.o ioctl.o ptr_array.o sysfs.o ctrl.o utils.o
+OBJS = libnvme.o ioctl.o ptr_array.o sysfs.o ctrl.o utils.o ns.o
 
 CFLAGS ?= -g
 CFLAGS += -Wall -Werror -Wextra -fvisibility=hidden -fPIC -I.
 
 #LIBADD =
 
-all: $(LIBS) $(DEVLIB) $(LIBS_MAJOR)
+all: $(LIBS) $(DEVLIB) $(LIBS_MAJOR) $(TESTS)
 
 $(LIBS): $(OBJS)
 	$(CC) $(LDFLAGS) -shared -Wl,-soname=$@ -o $@ $(OBJS) $(LIBADD)
@@ -36,13 +36,13 @@ $(LIBS_MAJOR): $(LIBS)
 	ln -sf $(LIBS) $@
 
 clean:
-	$(RM) core *.a *.o *.gz *.so *.so.* $(TESTS)
+	$(RM) core *.a *.o *.gz *.so *.so.* $(TESTS) test/nvme_test_ns.o
 
 test/ptr_array_test: ptr_array.o
 
+test/nvme_ctrls_test: $(DEVLIB) test/nvme_test_ns.o
 test/nvme_ctrls_test: CFLAGS = -Wall -Werror -Wextra -I$(TOPDIR)/libnvme -g
 test/nvme_ctrls_test: LDFLAGS = -L$(TOPDIR)/libnvme -lnvme
-test/nvme_ctrls_test: $(DEVLIB)
 
 check: $(TESTS)
 	for unit_test in $(TESTS); do \

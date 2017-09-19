@@ -23,32 +23,8 @@
 
 #include <libnvme/libnvme.h>
 
-#define _ctrl_print_pro_char(cnt, prop_name) \
-	printf(# prop_name ": '%s'\n", nvme_ctrl_ ## prop_name ##_get(cnt))
-
-#define _ctrl_print_pro_u8(cnt, prop_name) \
-	printf(# prop_name ": %" PRIu8 "\n", \
-	       nvme_ctrl_ ## prop_name ## _get(cnt))
-
-#define _ctrl_print_pro_u16(cnt, prop_name) \
-	printf(# prop_name ": %" PRIu16 "\n", \
-	       nvme_ctrl_ ## prop_name ## _get(cnt))
-
-#define _ctrl_print_pro_u32(cnt, prop_name) \
-	printf(# prop_name ": %" PRIu32 "\n", \
-	       nvme_ctrl_ ## prop_name ## _get(cnt))
-
-#define _psd_print_pro_u8(p, prop_name) \
-	printf(# prop_name ": %" PRIu8 "\n", \
-	       nvme_psd_ ## prop_name ## _get(p))
-
-#define _psd_print_pro_u16(p, prop_name) \
-	printf(# prop_name ": %" PRIu16 "\n", \
-	       nvme_psd_ ## prop_name ## _get(p))
-
-#define _psd_print_pro_u32(p, prop_name) \
-	printf(# prop_name ": %" PRIu32 "\n", \
-	       nvme_psd_ ## prop_name ## _get(p))
+#include "nvme_test_utils.h"
+#include "nvme_test_ns.h"
 
 static void _test_nvme_ctrl_pro_query(struct nvme_ctrl *cnt);
 
@@ -58,20 +34,20 @@ static void _test_nvme_ctrl_raw_id_data(struct nvme_ctrl *cnt);
 
 static void _test_nvme_psd_pro_query(struct nvme_psd *psd)
 {
-	_psd_print_pro_u16(psd, mp);
-	_psd_print_pro_u8(psd, mxps);
-	_psd_print_pro_u8(psd, nops);
-	_psd_print_pro_u32(psd, enlat);
-	_psd_print_pro_u32(psd, exlat);
-	_psd_print_pro_u8(psd, rrt);
-	_psd_print_pro_u8(psd, rrl);
-	_psd_print_pro_u8(psd, rwt);
-	_psd_print_pro_u8(psd, rwl);
-	_psd_print_pro_u16(psd, idlp);
-	_psd_print_pro_u8(psd, ips);
-	_psd_print_pro_u16(psd, actp);
-	_psd_print_pro_u8(psd, apw);
-	_psd_print_pro_u8(psd, aps);
+	_print_prop_u16(nvme_psd, psd, mp);
+	_print_prop_u8(nvme_psd, psd, mxps);
+	_print_prop_u8(nvme_psd, psd, nops);
+	_print_prop_u32(nvme_psd, psd, enlat);
+	_print_prop_u32(nvme_psd, psd, exlat);
+	_print_prop_u8(nvme_psd, psd, rrt);
+	_print_prop_u8(nvme_psd, psd, rrl);
+	_print_prop_u8(nvme_psd, psd, rwt);
+	_print_prop_u8(nvme_psd, psd, rwl);
+	_print_prop_u16(nvme_psd, psd, idlp);
+	_print_prop_u8(nvme_psd, psd, ips);
+	_print_prop_u16(nvme_psd, psd, actp);
+	_print_prop_u8(nvme_psd, psd, apw);
+	_print_prop_u8(nvme_psd, psd, aps);
 }
 
 static void _test_nvme_ctrl_pro_query(struct nvme_ctrl *cnt)
@@ -80,70 +56,70 @@ static void _test_nvme_ctrl_pro_query(struct nvme_ctrl *cnt)
 	uint8_t i = 0;
 	uint8_t psd_count = 0;
 
-	_ctrl_print_pro_char(cnt, dev_path);
-	_ctrl_print_pro_u16(cnt, vid);
-	_ctrl_print_pro_u16(cnt, ssvid);
-	_ctrl_print_pro_char(cnt, sn);
-	_ctrl_print_pro_char(cnt, mn);
-	_ctrl_print_pro_char(cnt, fr);
-	_ctrl_print_pro_u8(cnt, rab);
-	_ctrl_print_pro_u32(cnt, ieee);
-	_ctrl_print_pro_u8(cnt, cmic);
-	_ctrl_print_pro_u8(cnt, mdts);
-	_ctrl_print_pro_u16(cnt, cntlid);
-	_ctrl_print_pro_u32(cnt, ver);
-	_ctrl_print_pro_char(cnt, ver_str);
-	_ctrl_print_pro_u32(cnt, rtd3r);
-	_ctrl_print_pro_u32(cnt, rtd3e);
-	_ctrl_print_pro_u16(cnt, oaes);
-	_ctrl_print_pro_u32(cnt, ctratt);
-	_ctrl_print_pro_char(cnt, fguid);
-	_ctrl_print_pro_u16(cnt, oacs);
-	_ctrl_print_pro_u8(cnt, acl);
-	_ctrl_print_pro_u8(cnt, aerl);
-	_ctrl_print_pro_u8(cnt, frmw);
-	_ctrl_print_pro_u8(cnt, lpa);
-	_ctrl_print_pro_u8(cnt, elpe);
-	_ctrl_print_pro_u8(cnt, npss);
-	_ctrl_print_pro_u8(cnt, avscc);
-	_ctrl_print_pro_u8(cnt, apsta);
-	_ctrl_print_pro_u16(cnt, wctemp);
-	_ctrl_print_pro_u16(cnt, cctemp);
-	_ctrl_print_pro_u16(cnt, mtfa);
-	_ctrl_print_pro_u32(cnt, hmpre);
-	_ctrl_print_pro_u32(cnt, hmmin);
+	_print_prop_char(nvme_ctrl, cnt, dev_path);
+	_print_prop_u16(nvme_ctrl, cnt, vid);
+	_print_prop_u16(nvme_ctrl, cnt, ssvid);
+	_print_prop_char(nvme_ctrl, cnt, sn);
+	_print_prop_char(nvme_ctrl, cnt, mn);
+	_print_prop_char(nvme_ctrl, cnt, fr);
+	_print_prop_u8(nvme_ctrl, cnt, rab);
+	_print_prop_u32(nvme_ctrl, cnt, ieee);
+	_print_prop_u8(nvme_ctrl, cnt, cmic);
+	_print_prop_u8(nvme_ctrl, cnt, mdts);
+	_print_prop_u16(nvme_ctrl, cnt, cntlid);
+	_print_prop_u32(nvme_ctrl, cnt, ver);
+	_print_prop_char(nvme_ctrl, cnt, ver_str);
+	_print_prop_u32(nvme_ctrl, cnt, rtd3r);
+	_print_prop_u32(nvme_ctrl, cnt, rtd3e);
+	_print_prop_u16(nvme_ctrl, cnt, oaes);
+	_print_prop_u32(nvme_ctrl, cnt, ctratt);
+	_print_prop_char(nvme_ctrl, cnt, fguid);
+	_print_prop_u16(nvme_ctrl, cnt, oacs);
+	_print_prop_u8(nvme_ctrl, cnt, acl);
+	_print_prop_u8(nvme_ctrl, cnt, aerl);
+	_print_prop_u8(nvme_ctrl, cnt, frmw);
+	_print_prop_u8(nvme_ctrl, cnt, lpa);
+	_print_prop_u8(nvme_ctrl, cnt, elpe);
+	_print_prop_u8(nvme_ctrl, cnt, npss);
+	_print_prop_u8(nvme_ctrl, cnt, avscc);
+	_print_prop_u8(nvme_ctrl, cnt, apsta);
+	_print_prop_u16(nvme_ctrl, cnt, wctemp);
+	_print_prop_u16(nvme_ctrl, cnt, cctemp);
+	_print_prop_u16(nvme_ctrl, cnt, mtfa);
+	_print_prop_u32(nvme_ctrl, cnt, hmpre);
+	_print_prop_u32(nvme_ctrl, cnt, hmmin);
 	printf("tnvmcap: %" PRIu64 "\n",
 	       le64toh(*((uint64_t *) nvme_ctrl_tnvmcap_get(cnt))));
 	printf("unvmcap: %" PRIu64 "\n",
 	       le64toh(*((uint64_t *) nvme_ctrl_unvmcap_get(cnt))));
-	_ctrl_print_pro_u32(cnt, rpmbs);
-	_ctrl_print_pro_u16(cnt, edstt);
-	_ctrl_print_pro_u8(cnt, esto);
-	_ctrl_print_pro_u8(cnt, fwug);
-	_ctrl_print_pro_u16(cnt, kas);
-	_ctrl_print_pro_u16(cnt, hctma);
-	_ctrl_print_pro_u16(cnt, mntmt);
-	_ctrl_print_pro_u16(cnt, mxtmt);
-	_ctrl_print_pro_u32(cnt, sanicap);
-	_ctrl_print_pro_u8(cnt, sqes);
-	_ctrl_print_pro_u8(cnt, cqes);
-	_ctrl_print_pro_u16(cnt, maxcmd);
-	_ctrl_print_pro_u32(cnt, nn);
-	_ctrl_print_pro_u16(cnt, oncs);
-	_ctrl_print_pro_u16(cnt, fuses);
-	_ctrl_print_pro_u8(cnt, fna);
-	_ctrl_print_pro_u8(cnt, vwc);
-	_ctrl_print_pro_u16(cnt, awun);
-	_ctrl_print_pro_u16(cnt, awupf);
-	_ctrl_print_pro_u8(cnt, nvscc);
-	_ctrl_print_pro_u16(cnt, acwu);
-	_ctrl_print_pro_u16(cnt, sgls);
-	_ctrl_print_pro_char(cnt, subnqn);
-	_ctrl_print_pro_u32(cnt, ioccsz);
-	_ctrl_print_pro_u32(cnt, iorcsz);
-	_ctrl_print_pro_u16(cnt, icdoff);
-	_ctrl_print_pro_u8(cnt, ctrattr);
-	_ctrl_print_pro_u8(cnt, msdbd);
+	_print_prop_u32(nvme_ctrl, cnt, rpmbs);
+	_print_prop_u16(nvme_ctrl, cnt, edstt);
+	_print_prop_u8(nvme_ctrl, cnt, esto);
+	_print_prop_u8(nvme_ctrl, cnt, fwug);
+	_print_prop_u16(nvme_ctrl, cnt, kas);
+	_print_prop_u16(nvme_ctrl, cnt, hctma);
+	_print_prop_u16(nvme_ctrl, cnt, mntmt);
+	_print_prop_u16(nvme_ctrl, cnt, mxtmt);
+	_print_prop_u32(nvme_ctrl, cnt, sanicap);
+	_print_prop_u8(nvme_ctrl, cnt, sqes);
+	_print_prop_u8(nvme_ctrl, cnt, cqes);
+	_print_prop_u16(nvme_ctrl, cnt, maxcmd);
+	_print_prop_u32(nvme_ctrl, cnt, nn);
+	_print_prop_u16(nvme_ctrl, cnt, oncs);
+	_print_prop_u16(nvme_ctrl, cnt, fuses);
+	_print_prop_u8(nvme_ctrl, cnt, fna);
+	_print_prop_u8(nvme_ctrl, cnt, vwc);
+	_print_prop_u16(nvme_ctrl, cnt, awun);
+	_print_prop_u16(nvme_ctrl, cnt, awupf);
+	_print_prop_u8(nvme_ctrl, cnt, nvscc);
+	_print_prop_u16(nvme_ctrl, cnt, acwu);
+	_print_prop_u16(nvme_ctrl, cnt, sgls);
+	_print_prop_char(nvme_ctrl, cnt, subnqn);
+	_print_prop_u32(nvme_ctrl, cnt, ioccsz);
+	_print_prop_u32(nvme_ctrl, cnt, iorcsz);
+	_print_prop_u16(nvme_ctrl, cnt, icdoff);
+	_print_prop_u8(nvme_ctrl, cnt, ctrattr);
+	_print_prop_u8(nvme_ctrl, cnt, msdbd);
 
 	psds = nvme_ctrl_psds_get(cnt);
 	psd_count = nvme_ctrl_npss_get(cnt) + 1;
@@ -199,6 +175,8 @@ int main(void) {
 		if (nvme_ctrl_ver_get(cnts[i]) >= NVME_SPEC_VERSION(1, 2, 0))
 			printf("INFO: We are facing 1.2.0+ NVMe "
 			       "implementation.\n");
+		if (_nvme_ns_test(nvme_ctrl_dev_path_get(cnts[i])) != 0)
+			goto out;
 	}
 
 out:

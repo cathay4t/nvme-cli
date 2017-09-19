@@ -133,4 +133,8 @@ struct _nvme_spec_ver {
 int _nvme_ctrl_get_by_fd(int fd, struct nvme_ctrl **cnt,
 			 const char *dev_path, char *err_msg);
 
+int _nvme_ctrl_active_ns_id_list_get(int fd, struct nvme_ctrl *cnt,
+				     uint32_t **ns_ids, uint32_t *ns_id_count,
+				     char *err_msg);
+
 #endif	/* End of _NVME_CTRL_H_ */

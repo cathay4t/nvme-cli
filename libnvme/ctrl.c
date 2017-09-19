@@ -35,7 +35,9 @@
 #include "ioctl.h"
 #include "sysfs.h"
 
-#define _NVME_ADMIN_CMD_IDENTIFY_CNS_ALL_CTRL	0x01
+#define _NVME_ADMIN_CMD_IDENTIFY_CNS_ALL_CTRL		0x01
+#define _NVME_ADMIN_CMD_IDENTIFY_CNS_ALL_ACTIVE_NS	0x02
+#define _NVME_ADMIN_CMD_IDENTIFY_NS_MAX_COUNT		1024
 
 #define _NVME_VER_STR_MAX_LEN			12
 /* The maximum version is 65536.15.15 */
@@ -330,4 +332,76 @@ const uint8_t *nvme_ctrl_vendor_specfic_get(struct nvme_ctrl *cnt)
 	assert(cnt != NULL);
 	errno = 0;
 	return cnt->raw_data.vendor_specific;
+}
+
+int _nvme_ctrl_active_ns_id_list_get(int fd, struct nvme_ctrl *cnt,
+				     uint32_t **ns_ids, uint32_t *ns_id_count,
+				     char *err_msg)
+{
+	int rc = NVME_OK;
+	uint8_t buff[_NVME_ADMIN_CMD_IDENTIFY_DATA_LEN];
+	uint32_t got_ns_count = 0;
+	uint32_t i = 0;
+	uint32_t cur_ns_id = 0;
+	uint8_t *tmp_ptr = NULL;
+
+	assert(cnt != NULL);
+	assert(ns_ids != NULL);
+	assert(ns_id_count != NULL);
+
+	*ns_id_count = nvme_ctrl_nn_get(cnt);
+
+	if (*ns_id_count == 0)
+		goto out;
+
+	*ns_ids = (uint32_t *) calloc(sizeof(uint32_t), *ns_id_count);
+	_alloc_null_check(err_msg, *ns_ids, rc, out);
+
+	/* TODO(Gris Ge): Handle support of
+	 *	* Old NVMe SPEC 1.0
+	 *	* Keep looping tile got all NSIDs as we only got 1024 for each
+	 *	  call.
+	 */
+
+	if (nvme_ctrl_ver_get(cnt) < NVME_SPEC_VERSION(1, 1, 0)) {
+		/* pre SPEC 1.1.0, Namespaces shall be allocated in
+		 * order (starting with 1) and packed sequentially.
+		 */
+		for (i = 0; i < nvme_ctrl_nn_get(cnt); ++i)
+			(*ns_ids)[i] = i + 1;
+		goto out;
+	}
+
+	while(got_ns_count < *ns_id_count) {
+		_good(_nvme_ioctl_identify(
+			fd, buff, _NVME_ADMIN_CMD_IDENTIFY_CNS_ALL_ACTIVE_NS,
+			got_ns_count, err_msg), rc, out);
+		for (i = 0; i < _NVME_ADMIN_CMD_IDENTIFY_NS_MAX_COUNT; ++i) {
+			tmp_ptr = buff + sizeof(uint32_t)/sizeof(uint8_t) * i;
+			cur_ns_id = le32toh(*((uint32_t *) tmp_ptr));
+			if (cur_ns_id != 0) {
+				(*ns_ids)[got_ns_count] = cur_ns_id;
+				++got_ns_count;
+				continue;
+			}
+			if (got_ns_count != *ns_id_count) {
+				rc = NVME_ERR_CORRUPTED_NVME_DATA;
+				_nvme_err_msg_set(err_msg,
+						  "Corrupted NVMe identify "
+						  "data: not enough NS ID list"
+						  ": got %" PRIu32 ", expect %"
+						  PRIu32, got_ns_count,
+						  *ns_id_count);
+			}
+			goto out;
+		}
+	}
+
+out:
+	if (rc != NVME_OK) {
+		free(*ns_ids);
+		*ns_ids = NULL;
+		*ns_id_count = 0;
+	}
+	return rc;
 }

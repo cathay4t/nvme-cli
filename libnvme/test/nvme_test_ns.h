@@ -16,18 +16,15 @@
  * Author: Gris Ge <fge@redhat.com>
  */
 
-#ifndef _LIBNVME_COMMON_H_
-#define _LIBNVME_COMMON_H_
+#ifndef _NVME_NS_TEST_H_
+#define _NVME_NS_TEST_H_
 
-#include <errno.h>
+#include <stdio.h>
+#include <libnvme/libnvme.h>
 
-#define _DLL_PUBLIC __attribute__ ((visibility ("default")))
+/*
+ * Return 0 if all tests pass. Otherwise return 1.
+ */
+int _nvme_ns_test(const char *blk_path);
 
-#define NVME_OK				0
-#define NVME_ERR_BUG			-1
-#define NVME_ERR_CORRUPTED_NVME_DATA	-2
-#define NVME_ERR_NO_MEMORY		ENOMEM
-#define NVME_ERR_PERMISSION_DENY	EACCES
-#define NVME_ERR_INVALID_ARGUMENT	EINVAL
-
-#endif /* End of _LIBNVME_COMMON_H_ */
+#endif	/* End of _NVME_NS_TEST_H_ */

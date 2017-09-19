@@ -28,6 +28,7 @@ extern "C" {
 
 #include "libnvme_common.h"
 #include "libnvme_ctrl.h"
+#include "libnvme_ns.h"
 
 /*
  * Macro to convert NVMe SPEC version to a integer which could be compared.
@@ -179,6 +180,169 @@ _DLL_PUBLIC void nvme_ctrl_free(struct nvme_ctrl *cnt);
  *	returned pointer.
  */
 _DLL_PUBLIC const char *nvme_strerror(int rc);
+
+/**
+ * nvme_nss_get() - Query all active NVMe namespaces on specified controller.
+ *
+ * Query all active NVMe namespaces on specified controller.
+ * The properties of NVMe namespace could be retrieved by functions like:
+ * `nvme_ns_<prop_name>_get()`. The '<prop_name>' here is the abbreviation of
+ * certain property used by NVMe SPEC. For example, to retrieved
+ * 'Namespace Size' which is abbreviated to 'NSZE' in NVMe SPEC, hence the
+ * function responsible is `nvme_ns_nsze_get()`.
+ *
+ * @dev_path:
+ *	String of device path of NVMe controller in the form of
+ *	"/dev/nvme[0-9]+" or "/dev/nvme[0-9]+n[0-9]+".
+ *	If you provide namespace device path ("/dev/nvme[0-9]+n[0-9]+") here,
+ *	it will be only used for identifying the controller, the namespace
+ *	attached to that device path is irrelevant.
+ * @nss:
+ *	Output pointer of `struct nvme_ns` array. Memory should be freed by
+ *	nvme_nss_free(). If specified pointer is NULL, your program will be
+ *	terminated by assert().
+ * @ns_count:
+ *	Output pointer of `struct nvme_ns` array size.
+ *	If specified pointer is NULL, your program will be terminated by
+ *	assert().
+ * @err_msg:
+ *	Output pointer of error message when available. Memory should be freed
+ *	by free(). If specified pointer is NULL, no error message will be
+ *	generated.
+ *
+ * Return:
+ *	int. Valid error codes are:
+ *
+ *	* NVME_OK
+ *
+ *	* NVME_ERR_BUG
+ *
+ *	* NVME_ERR_NO_MEMORY
+ *
+ *	* NVME_ERR_PERMISSION_DENY
+ *
+ *	Error number could be converted to string by nvme_strerror().
+ */
+_DLL_PUBLIC int nvme_nss_get(const char *dev_path, struct nvme_ns ***nss,
+			     uint32_t *ns_count, const char **err_msg);
+
+/**
+ * nvme_ns_get() - Query specified NVMe namespaces.
+ *
+ * Query specified NVMe namespaces.
+ * The properties of NVMe namespace could be retrieved by functions like:
+ * `nvme_ns_<prop_name>_get()`. The '<prop_name>' here is the abbreviation of
+ * certain property used by NVMe SPEC. For example, to retrieved
+ * 'Namespace Size' which is abbreviated to 'NSZE' in NVMe SPEC, hence the
+ * function responsible is `nvme_ns_nsze_get()`.
+ *
+ * @ns_dev_path:
+ *	String of device path of NVMe controller in the form of
+ *	"/dev/nvme[0-9]+n[0-9]+".
+ *	If you provide NVMe controller's device path ("/dev/nvme[0-9]+") here,
+ *	NVME_ERR_INVALID_ARGUMENT will be returned.
+ * @ns:
+ *	Output pointer of `struct nvme_ns`. Memory should be freed by
+ *	nvme_ns_free(). If specified pointer is NULL, your program will be
+ *	terminated by assert().
+ * @err_msg:
+ *	Output pointer of error message when available. Memory should be freed
+ *	by free(). If specified pointer is NULL, no error message will be
+ *	generated.
+ *
+ * Return:
+ *	int. Valid error codes are:
+ *
+ *	* NVME_OK
+ *
+ *	* NVME_ERR_BUG
+ *
+ *	* NVME_ERR_NO_MEMORY
+ *
+ *	* NVME_ERR_PERMISSION_DENY
+ *
+ *	* NVME_ERR_INVALID_ARGUMENT
+ *
+ *	Error number could be converted to string by nvme_strerror().
+ */
+_DLL_PUBLIC int nvme_ns_get(const char *ns_dev_path, struct nvme_ns **ns,
+			    const char **err_msg);
+
+/**
+ * nvme_ns_get_by_nsid() - Query specified NVMe namespaces by NSID.
+ *
+ * Query specified NVMe namespaces by NSID.
+ * The properties of NVMe namespace could be retrieved by functions like:
+ * `nvme_ns_<prop_name>_get()`. The '<prop_name>' here is the abbreviation of
+ * certain property used by NVMe SPEC. For example, to retrieved
+ * 'Namespace Size' which is abbreviated to 'NSZE' in NVMe SPEC, hence the
+ * function responsible is `nvme_ns_nsze_get()`.
+ *
+ * @dev_path:
+ *	String of device path of NVMe controller in the form of
+ *	"/dev/nvme[0-9]+" or "/dev/nvme[0-9]+n[0-9]+".
+ *	If you provide namespace device path ("/dev/nvme[0-9]+n[0-9]+") here,
+ *	it will be only used for identifying the controller, the namespace
+ *	attached to that device path is irrelevant.
+ * @nsid:
+ *	Namespace ID.
+ * @ns:
+ *	Output pointer of `struct nvme_ns`. Memory should be freed by
+ *	nvme_ns_free(). If specified pointer is NULL, your program will be
+ *	terminated by assert().
+ * @err_msg:
+ *	Output pointer of error message when available. Memory should be freed
+ *	by free(). If specified pointer is NULL, no error message will be
+ *	generated.
+ *
+ * Return:
+ *	int. Valid error codes are:
+ *
+ *	* NVME_OK
+ *
+ *	* NVME_ERR_BUG
+ *
+ *	* NVME_ERR_NO_MEMORY
+ *
+ *	* NVME_ERR_PERMISSION_DENY
+ *
+ *	* NVME_ERR_INVALID_ARGUMENT
+ *
+ *	Error number could be converted to string by nvme_strerror().
+ */
+_DLL_PUBLIC int nvme_ns_get_by_nsid(const char *dev_path, uint32_t nsid,
+				    struct nvme_ns **ns, const char **err_msg);
+
+/**
+ * nvme_nss_free() - Free memory of the struct nvme_ns array.
+ *
+ * Free memory of the struct nvme_ns array generated by nvme_nss_get().
+ *
+ * @nss:
+ *	Pointer of `struct nvme_ns` array.
+ *	If specified pointer is NULL, nothing will be done.
+ * @ns_count:
+ *	The `struct nvme_ns` array size.
+ *	If specified as 0, nothing will be done.
+ *
+ * Return:
+ *	void
+ */
+_DLL_PUBLIC void nvme_nss_free(struct nvme_ns **nss, uint32_t ns_count);
+
+/**
+ * nvme_ns_free() - Free memory of the struct nvme_ns.
+ *
+ * Free memory of the struct nvme_ns generated by nvme_ns_get().
+ *
+ * @ns:
+ *	Pointer of `struct nvme_ns`.
+ *	If specified pointer is NULL, nothing will be done.
+ *
+ * Return:
+ *	void
+ */
+_DLL_PUBLIC void nvme_ns_free(struct nvme_ns *ns);
 
 #ifdef __cplusplus
 } /* extern "C" */
